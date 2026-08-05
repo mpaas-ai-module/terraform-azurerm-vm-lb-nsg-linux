@@ -189,3 +189,16 @@ variable "vtpm_enabled" {
   default = "true"
 
 }
+
+variable "key_vault_id" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    Resource id of an EXISTING key vault to store generated secrets in.
+    Prefer this over keyvault_name: it is a computed attribute, so passing
+    module.resource_group.keyvault_id both orders the apply correctly and
+    skips the by-name data lookup, which fails at plan when the vault is
+    created by the same apply ("Key Vault (...) was not found").
+    Leave null to look the vault up by keyvault_name instead.
+  EOT
+}
