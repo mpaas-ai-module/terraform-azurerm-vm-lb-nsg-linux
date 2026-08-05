@@ -164,6 +164,10 @@ variable "probe_ports" {
   default     = "443"
 }
 variable "keyvault_name" {
+  # Optional so a caller passing key_vault_id can omit it; "" turns the
+  # plan-time lookup off (see the count on the data source).
+  default = ""
+
   description = "The Keyvault name where VM password will be stored in"
   type        = string
 

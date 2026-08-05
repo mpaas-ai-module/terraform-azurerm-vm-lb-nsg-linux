@@ -195,9 +195,10 @@ resource "azurerm_lb_rule" "lb_rule" {
 
 # Getting existing Keyvault name to store credentials as secrets
 data "azurerm_key_vault" "key_vault" {
-  # Skipped when the caller passes the vault id directly. Reading this at
-  # plan time fails outright when the vault is created by the same apply.
-  count = var.key_vault_id == null ? 1 : 0
+  # Skipped when the caller supplies key_vault_id instead of a name (it then
+  # omits keyvault_name, which defaults to ""). Gated on keyvault_name, NOT
+  # key_vault_id: only the former is known at plan.
+  count = var.keyvault_name == "" ? 0 : 1
 
   name                = var.keyvault_name
   resource_group_name = var.resource_group_name
@@ -207,7 +208,7 @@ locals {
   # Prefer the id the caller wired (a computed attribute, so unknown at plan —
   # which is exactly what defers the key-vault secret below to apply). Fall back
   # to the by-name lookup for callers that still pass only keyvault_name.
-  key_vault_id = var.key_vault_id != null ? var.key_vault_id : data.azurerm_key_vault.key_vault[0].id
+  key_vault_id = var.key_vault_id != null ? var.key_vault_id : one(data.azurerm_key_vault.key_vault[*].id)
 }
 
 # Creates a random string password for vm default user
