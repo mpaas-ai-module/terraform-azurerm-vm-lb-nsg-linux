@@ -189,3 +189,15 @@ variable "vtpm_enabled" {
   default = "true"
 
 }
+
+# --- Added from old repo (missing in new as of comparison) ---
+variable "recovery_services_vault_name" {
+  type        = string
+  description = "name of the recover service vault"
+}
+
+# --- Added from old repo (missing in new as of comparison) ---
+variable "services_vault_resource_group_name" {
+  type        = string
+  description = "name of resource group where the recovery service vault reside in"
+}

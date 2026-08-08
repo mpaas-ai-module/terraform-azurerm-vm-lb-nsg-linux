@@ -219,3 +219,27 @@ resource "azurerm_key_vault_secret" "vm_password" {
   key_vault_id = data.azurerm_key_vault.key_vault.id
   depends_on   = [azurerm_linux_virtual_machine.vm]
 }
+
+# --- Added from old repo (missing in new as of comparison) ---
+data "azurerm_recovery_services_vault" "services_vault" {
+  name                = var.recovery_services_vault_name
+  resource_group_name = var.services_vault_resource_group_name
+}
+
+# --- Added from old repo (missing in new as of comparison) ---
+data "azurerm_backup_policy_vm" "policy" {
+  name                = "VM-backup-policy"
+  recovery_vault_name = data.azurerm_recovery_services_vault.services_vault.name
+  resource_group_name = data.azurerm_recovery_services_vault.services_vault.resource_group_name
+}
+
+# --- Added from old repo (missing in new as of comparison) ---
+resource "azurerm_backup_protected_vm" "backup_protected_vm" {
+  resource_group_name = data.azurerm_recovery_services_vault.services_vault.resource_group_name
+  recovery_vault_name = data.azurerm_recovery_services_vault.services_vault.name
+  source_vm_id        = azurerm_linux_virtual_machine.vm.id
+  backup_policy_id    = data.azurerm_backup_policy_vm.policy.id
+  depends_on = [
+    azurerm_linux_virtual_machine.vm
+  ]
+}
