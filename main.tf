@@ -29,26 +29,21 @@ resource "azurerm_linux_virtual_machine" "vm" {
     ]
   }
 }
-resource "azurerm_disk_access" "azurerm_disk_access" {
-  name                = "${var.name}-diskacc"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-}
 
-resource "azurerm_virtual_machine_extension" "example" {
-  name                 = "${var.name}-defender"
-  virtual_machine_id   = azurerm_linux_virtual_machine.vm.id
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.0"
-
-  settings = <<SETTINGS
-    {
-      "fileUris": ["https://sharedsaelk.blob.core.windows.net/s1-data/install_linux_defender.sh"],
-      "commandToExecute": "sh install_linux_defender.sh"
-    }
-SETTINGS
-}
+#resource "azurerm_virtual_machine_extension" "example" {
+#  name                 = "${var.name}-defender"
+#  virtual_machine_id   = azurerm_linux_virtual_machine.vm.id
+#  publisher            = "Microsoft.Azure.Extensions"
+#  type                 = "CustomScript"
+#  type_handler_version = "2.0"
+#
+#  settings = <<SETTINGS
+#    {
+#      "fileUris": ["https://sharedsaelk.blob.core.windows.net/s1-data/install_linux_defender.sh"],
+#      "commandToExecute": "sh install_linux_defender.sh"
+#    }
+#SETTINGS
+#}
 
 # Creates Network Interface Card with private IP for Virtual Machine
 resource "azurerm_network_interface" "nic" {
@@ -234,23 +229,28 @@ resource "azurerm_key_vault_secret" "vm_password" {
 
 # --- Added from old repo (missing in new as of comparison) ---
 data "azurerm_recovery_services_vault" "services_vault" {
+  count               = lower(var.environment) == "prod" ? 0 : 1
   name                = var.recovery_services_vault_name
   resource_group_name = var.services_vault_resource_group_name
 }
 
+
 # --- Added from old repo (missing in new as of comparison) ---
 data "azurerm_backup_policy_vm" "policy" {
-  name                = "VM-backup-policy"
-  recovery_vault_name = data.azurerm_recovery_services_vault.services_vault.name
-  resource_group_name = data.azurerm_recovery_services_vault.services_vault.resource_group_name
+  count               = lower(var.environment) == "prod" ? 0 : 1
+  name                = "EnhancedPolicy"
+  recovery_vault_name = data.azurerm_recovery_services_vault.services_vault[0].name
+  resource_group_name = data.azurerm_recovery_services_vault.services_vault[0].resource_group_name
 }
 
 # --- Added from old repo (missing in new as of comparison) ---
 resource "azurerm_backup_protected_vm" "backup_protected_vm" {
-  resource_group_name = data.azurerm_recovery_services_vault.services_vault.resource_group_name
-  recovery_vault_name = data.azurerm_recovery_services_vault.services_vault.name
+  count               = lower(var.environment) == "prod" ? 0 : 1
+  resource_group_name = data.azurerm_recovery_services_vault.services_vault[0].resource_group_name
+  recovery_vault_name = data.azurerm_recovery_services_vault.services_vault[0].name
   source_vm_id        = azurerm_linux_virtual_machine.vm.id
-  backup_policy_id    = data.azurerm_backup_policy_vm.policy.id
+  backup_policy_id    = data.azurerm_backup_policy_vm.policy[0].id
+
   depends_on = [
     azurerm_linux_virtual_machine.vm
   ]
